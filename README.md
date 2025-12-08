@@ -107,17 +107,49 @@ spec:
 ## 🔧 Configuration Options
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+|-----------|-------------|---------|--------|
 | `endpoints` | List of etcd endpoints | **Required** |
 | `prefix` | Prefix for DNS records | `/skydns` |
-| `username` | etcd username | - |
-| `password` | etcd password | - |
+| `username` | etcd username (inline, use credentialsSecretRef for production) | - |
+| `password` | etcd password (inline, use credentialsSecretRef for production) | - |
+| `credentialsSecretRef` | Name of Kubernetes secret containing etcd credentials | - |
+| `credentialsSecretNamespace` | Namespace of the credentials secret | challenge namespace |
 | `dialTimeout` | Connection timeout (seconds) | `10` |
 | `tlsSecretRef` | Name of Kubernetes secret containing TLS certs | - |
 | `tlsSecretNamespace` | Namespace of the TLS secret | challenge namespace |
 | `tlsInsecureSkipVerify` | Skip TLS verification (not recommended) | `false` |
 
 ## 🔐 TLS Configuration
+
+### Credentials from Secret (Recommended)
+
+For production environments, it's recommended to store etcd credentials in a Kubernetes secret instead of inline in the Issuer configuration:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etcd-credentials
+  namespace: cert-manager
+type: Opaque
+data:
+  # echo -n 'root' | base64
+  username: cm9vdA==
+  # echo -n 'your-password' | base64
+  password: eW91ci1wYXNzd29yZA==
+```
+
+Then reference it in your Issuer:
+
+```yaml
+config:
+  endpoints:
+    - "http://etcd:2379"
+  credentialsSecretRef: "etcd-credentials"
+  credentialsSecretNamespace: "cert-manager"  # Optional, defaults to challenge namespace
+```
+
+### TLS Certificates
 
 To connect to a TLS-secured etcd cluster, create a Kubernetes secret containing the certificates:
 
