@@ -285,7 +285,7 @@ func loadConfig(cfgJSON *extapi.JSON) (*EtcdConfig, error) {
 	}
 
 	if cfgJSON == nil {
-		return cfg, nil
+		return nil, fmt.Errorf("config is required")
 	}
 
 	if err := json.Unmarshal(cfgJSON.Raw, cfg); err != nil {
