@@ -14,7 +14,7 @@ var GroupName = os.Getenv("GROUP_NAME")
 
 func main() {
 	if GroupName == "" {
-		GroupName = "acme.etcd.labbs"
+		GroupName = "acme.example.com"
 	}
 
 	klog.InitFlags(nil)
