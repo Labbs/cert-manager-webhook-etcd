@@ -1,0 +1,58 @@
+# Create a selfsigned Issuer, in order to create a root CA certificate for
+# signing webhook serving certificates
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cert-manager-webhook-etcd.selfSignedIssuer" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+# Generate a CA Certificate used to sign certificates for the webhook
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cert-manager-webhook-etcd.rootCACertificate" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "cert-manager-webhook-etcd.rootCACertificate" . }}
+  duration: {{ .Values.tls.caDuration }}
+  issuerRef:
+    name: {{ include "cert-manager-webhook-etcd.selfSignedIssuer" . }}
+  commonName: "ca.{{ include "cert-manager-webhook-etcd.fullname" . }}.{{ .Release.Namespace }}"
+  isCA: true
+---
+# Create an Issuer that uses the above generated CA certificate to issue certs
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "cert-manager-webhook-etcd.rootCAIssuer" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "cert-manager-webhook-etcd.rootCACertificate" . }}
+---
+# Finally, generate a serving certificate for the webhook to use
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "cert-manager-webhook-etcd.servingCertificate" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "cert-manager-webhook-etcd.servingCertificate" . }}
+  duration: {{ .Values.tls.duration }}
+  issuerRef:
+    name: {{ include "cert-manager-webhook-etcd.rootCAIssuer" . }}
+  dnsNames:
+    - {{ include "cert-manager-webhook-etcd.fullname" . }}
+    - {{ include "cert-manager-webhook-etcd.fullname" . }}.{{ .Release.Namespace }}
+    - {{ include "cert-manager-webhook-etcd.fullname" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "cert-manager-webhook-etcd.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local

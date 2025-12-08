@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-etcd
+  namespace: cert-manager
+  labels:
+    app: cert-manager-webhook-etcd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cert-manager-webhook-etcd
+  template:
+    metadata:
+      labels:
+        app: cert-manager-webhook-etcd
+    spec:
+      serviceAccountName: cert-manager-webhook-etcd
+      containers:
+        - name: cert-manager-webhook-etcd
+          image: cert-manager-webhook-etcd:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --tls-cert-file=/tls/tls.crt
+            - --tls-private-key-file=/tls/tls.key
+            - --secure-port=443
+          env:
+            - name: GROUP_NAME
+              value: "acme.example.com"
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: certs
+              mountPath: /tls
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: certs
+          secret:
+            secretName: cert-manager-webhook-etcd-webhook-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-manager-webhook-etcd
+  namespace: cert-manager
+  labels:
+    app: cert-manager-webhook-etcd
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: https
+      protocol: TCP
+      name: https
+  selector:
+    app: cert-manager-webhook-etcd

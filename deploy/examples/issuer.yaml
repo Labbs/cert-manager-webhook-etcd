@@ -1,0 +1,89 @@
+# Example ClusterIssuer using the etcd webhook for DNS01 challenges
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging-etcd
+spec:
+  acme:
+    # Use Let's Encrypt staging server for testing
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.example.com
+            solverName: etcd
+            config:
+              # etcd endpoints - adjust to your etcd cluster
+              endpoints:
+                - "http://etcd-0.etcd:2379"
+                - "http://etcd-1.etcd:2379"
+                - "http://etcd-2.etcd:2379"
+              # Prefix for DNS records (SkyDNS/CoreDNS format)
+              prefix: "/skydns"
+              # Optional: etcd authentication
+              # username: "root"
+              # password: "password"
+              # Optional: dial timeout in seconds
+              dialTimeout: 10
+---
+# Example ClusterIssuer for production with TLS
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod-etcd
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - dns01:
+          webhook:
+            groupName: acme.example.com
+            solverName: etcd
+            config:
+              # Use https for TLS-enabled etcd
+              endpoints:
+                - "https://etcd-0.etcd:2379"
+                - "https://etcd-1.etcd:2379"
+                - "https://etcd-2.etcd:2379"
+              prefix: "/skydns"
+              # TLS configuration - reference to a Kubernetes secret
+              tlsSecretRef: "etcd-tls-certs"
+              tlsSecretNamespace: "etcd"
+---
+# Example TLS Secret for etcd connection
+# The secret should contain:
+# - ca.crt: CA certificate to verify etcd server
+# - tls.crt: Client certificate (for mTLS)
+# - tls.key: Client private key (for mTLS)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etcd-tls-certs
+  namespace: etcd
+type: Opaque
+data:
+  # Base64 encoded certificates
+  ca.crt: LS0tLS1CRUdJTi... # Your CA certificate
+  tls.crt: LS0tLS1CRUdJTi... # Your client certificate (optional, for mTLS)
+  tls.key: LS0tLS1CRUdJTi... # Your client key (optional, for mTLS)
+---
+# Example Certificate resource
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: example-com-tls
+  namespace: default
+spec:
+  secretName: example-com-tls
+  issuerRef:
+    name: letsencrypt-staging-etcd
+    kind: ClusterIssuer
+  dnsNames:
+    - example.com
+    - "*.example.com"
