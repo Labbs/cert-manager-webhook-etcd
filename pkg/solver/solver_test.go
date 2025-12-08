@@ -88,14 +88,10 @@ func TestLoadConfig(t *testing.T) {
 		validate    func(*testing.T, *EtcdConfig)
 	}{
 		{
-			name:        "nil config returns defaults",
+			name:        "nil config returns error",
 			configJSON:  nil,
-			expectError: false,
-			validate: func(t *testing.T, cfg *EtcdConfig) {
-				if cfg.Prefix != "/skydns" {
-					t.Errorf("expected default prefix /skydns, got %s", cfg.Prefix)
-				}
-			},
+			expectError: true,
+			validate:    nil,
 		},
 		{
 			name: "valid config with endpoints",
@@ -154,6 +150,36 @@ func TestLoadConfig(t *testing.T) {
 				}
 				if cfg.TLSSecretNamespace != "etcd" {
 					t.Errorf("expected tlsSecretNamespace etcd, got %s", cfg.TLSSecretNamespace)
+				}
+			},
+		},
+		{
+			name: "valid config with credentials secret ref",
+			configJSON: &extapi.JSON{
+				Raw: []byte(`{"endpoints": ["http://etcd:2379"], "credentialsSecretRef": "etcd-credentials", "credentialsSecretNamespace": "etcd"}`),
+			},
+			expectError: false,
+			validate: func(t *testing.T, cfg *EtcdConfig) {
+				if cfg.CredentialsSecretRef != "etcd-credentials" {
+					t.Errorf("expected credentialsSecretRef etcd-credentials, got %s", cfg.CredentialsSecretRef)
+				}
+				if cfg.CredentialsSecretNamespace != "etcd" {
+					t.Errorf("expected credentialsSecretNamespace etcd, got %s", cfg.CredentialsSecretNamespace)
+				}
+			},
+		},
+		{
+			name: "valid config with credentials secret ref without namespace",
+			configJSON: &extapi.JSON{
+				Raw: []byte(`{"endpoints": ["http://etcd:2379"], "credentialsSecretRef": "etcd-credentials"}`),
+			},
+			expectError: false,
+			validate: func(t *testing.T, cfg *EtcdConfig) {
+				if cfg.CredentialsSecretRef != "etcd-credentials" {
+					t.Errorf("expected credentialsSecretRef etcd-credentials, got %s", cfg.CredentialsSecretRef)
+				}
+				if cfg.CredentialsSecretNamespace != "" {
+					t.Errorf("expected credentialsSecretNamespace to be empty, got %s", cfg.CredentialsSecretNamespace)
 				}
 			},
 		},
