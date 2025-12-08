@@ -185,7 +185,7 @@ func (e *EtcdDNSSolver) getEtcdClient(cfg *EtcdConfig, ch *v1alpha1.ChallengeReq
 		etcdConfig.TLS = &tls.Config{
 			InsecureSkipVerify: true,
 		}
-		klog.V(2).Info("TLS configured with InsecureSkipVerify=true (not recommended for production)")
+		klog.Warning("TLS configured with InsecureSkipVerify=true (SECURITY RISK: TLS verification is disabled; not recommended for production)")
 	}
 
 	client, err := clientv3.New(etcdConfig)
