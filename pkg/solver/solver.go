@@ -315,10 +315,7 @@ func fqdnToEtcdPath(prefix, fqdn string) string {
 	}
 
 	// Build the etcd path
-	path := prefix
-	for _, part := range reversed {
-		path = path + "/" + part
-	}
+	path := prefix + "/" + strings.Join(reversed, "/")
 
 	return path
 }
