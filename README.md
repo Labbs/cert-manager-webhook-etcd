@@ -42,7 +42,7 @@ DNS webhook solver for [cert-manager](https://cert-manager.io/) using **etcd** a
 helm install cert-manager-webhook-etcd \
   ./charts/cert-manager-webhook-etcd \
   --namespace cert-manager \
-  --set groupName=acme.yourdomain.com
+  --set groupName=acme.example.com
 ```
 
 ### Option 2: Kubernetes Manifests
