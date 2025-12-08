@@ -10,7 +10,7 @@ all: build
 
 # Build the Go binary
 build:
-	CGO_ENABLED=0 go build -o bin/webhook -ldflags="-w -s" .
+	CGO_ENABLED=1 go build -o bin/webhook -ldflags="-w -s" .
 
 # Run tests
 test:
