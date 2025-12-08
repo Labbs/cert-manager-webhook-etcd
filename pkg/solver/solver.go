@@ -27,10 +27,14 @@ type EtcdDNSSolver struct {
 type EtcdConfig struct {
 	// Endpoints is a list of etcd endpoints
 	Endpoints []string `json:"endpoints"`
-	// Username for etcd authentication (optional)
+	// Username for etcd authentication (optional, use credentialsSecretRef for production)
 	Username string `json:"username,omitempty"`
-	// Password for etcd authentication (optional)
+	// Password for etcd authentication (optional, use credentialsSecretRef for production)
 	Password string `json:"password,omitempty"`
+	// CredentialsSecretRef is the name of the secret containing etcd credentials (username/password)
+	CredentialsSecretRef string `json:"credentialsSecretRef,omitempty"`
+	// CredentialsSecretNamespace is the namespace of the credentials secret (defaults to challenge namespace)
+	CredentialsSecretNamespace string `json:"credentialsSecretNamespace,omitempty"`
 	// TLSSecretRef is the name of the secret containing TLS certificates
 	TLSSecretRef string `json:"tlsSecretRef,omitempty"`
 	// TLSSecretNamespace is the namespace of the TLS secret (defaults to challenge namespace)
@@ -157,10 +161,19 @@ func (e *EtcdDNSSolver) getEtcdClient(cfg *EtcdConfig, ch *v1alpha1.ChallengeReq
 		DialTimeout: dialTimeout,
 	}
 
-	// Add authentication if provided
-	if cfg.Username != "" && cfg.Password != "" {
+	// Add authentication - priority: secret reference > inline credentials
+	if cfg.CredentialsSecretRef != "" {
+		username, password, err := e.loadCredentialsFromSecret(cfg, ch)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load credentials from secret: %v", err)
+		}
+		etcdConfig.Username = username
+		etcdConfig.Password = password
+		klog.V(2).Info("Credentials loaded from secret")
+	} else if cfg.Username != "" && cfg.Password != "" {
 		etcdConfig.Username = cfg.Username
 		etcdConfig.Password = cfg.Password
+		klog.V(2).Info("Using inline credentials (consider using credentialsSecretRef for production)")
 	}
 
 	// Configure TLS - priority: inline certs > secret reference > insecure
@@ -194,6 +207,36 @@ func (e *EtcdDNSSolver) getEtcdClient(cfg *EtcdConfig, ch *v1alpha1.ChallengeReq
 	}
 
 	return client, nil
+}
+
+// loadCredentialsFromSecret loads etcd credentials from a Kubernetes secret
+func (e *EtcdDNSSolver) loadCredentialsFromSecret(cfg *EtcdConfig, ch *v1alpha1.ChallengeRequest) (string, string, error) {
+	// Determine the namespace for the credentials secret
+	namespace := cfg.CredentialsSecretNamespace
+	if namespace == "" {
+		namespace = ch.ResourceNamespace
+	}
+
+	klog.V(2).Infof("Loading credentials secret %s from namespace %s", cfg.CredentialsSecretRef, namespace)
+
+	// Fetch the secret from Kubernetes
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	secret, err := e.client.CoreV1().Secrets(namespace).Get(ctx, cfg.CredentialsSecretRef, metav1.GetOptions{})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get credentials secret %s/%s: %v", namespace, cfg.CredentialsSecretRef, err)
+	}
+
+	username, usernameOk := secret.Data["username"]
+	password, passwordOk := secret.Data["password"]
+
+	if !usernameOk || !passwordOk {
+		return "", "", fmt.Errorf("credentials secret %s/%s must contain both 'username' and 'password' keys", namespace, cfg.CredentialsSecretRef)
+	}
+
+	klog.V(2).Info("Credentials loaded from secret")
+	return string(username), string(password), nil
 }
 
 // loadTLSConfigFromInline loads TLS certificates from inline PEM strings in the config
