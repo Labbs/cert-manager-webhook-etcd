@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/cert-manager/cert-manager/pkg/acme/webhook/cmd"
+
 	"k8s.io/klog/v2"
 
 	"github.com/cert-manager-webhook-etcd/pkg/solver"
