@@ -1,0 +1,19 @@
+apiVersion: v2
+name: cert-manager-webhook-etcd
+description: A Helm chart for cert-manager webhook with etcd DNS provider
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - cert-manager
+  - webhook
+  - etcd
+  - dns
+  - acme
+  - letsencrypt
+home: https://github.com/labbs/cert-manager-webhook-etcd
+sources:
+  - https://github.com/labbs/cert-manager-webhook-etcd
+maintainers:
+  - name: Your Name
+    email: your-email@example.com
