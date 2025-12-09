@@ -106,18 +106,18 @@ spec:
 
 ## 🔧 Configuration Options
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|--------|
-| `endpoints` | List of etcd endpoints | **Required** |
-| `prefix` | Prefix for DNS records | `/skydns` |
-| `username` | etcd username (inline, use credentialsSecretRef for production) | - |
-| `password` | etcd password (inline, use credentialsSecretRef for production) | - |
-| `credentialsSecretRef` | Name of Kubernetes secret containing etcd credentials | - |
-| `credentialsSecretNamespace` | Namespace of the credentials secret | challenge namespace |
-| `dialTimeout` | Connection timeout (seconds) | `10` |
-| `tlsSecretRef` | Name of Kubernetes secret containing TLS certs | - |
-| `tlsSecretNamespace` | Namespace of the TLS secret | challenge namespace |
-| `tlsInsecureSkipVerify` | Skip TLS verification (not recommended) | `false` |
+| Parameter | Description | Needed | Default |
+|-----------|-------------|---------|---------|
+| `endpoints` | List of etcd endpoints | yes | |
+| `prefix` | Prefix for DNS records | yes | `/skydns` |
+| `username` | etcd username (inline, use credentialsSecretRef for production) | no |  - |
+| `password` | etcd password (inline, use credentialsSecretRef for production) | no | - |
+| `credentialsSecretRef` | Name of Kubernetes secret containing etcd credentials | no | - |
+| `credentialsSecretNamespace` | Namespace of the credentials secret | no | challenge namespace |
+| `dialTimeout` | Connection timeout (seconds) | no |  `10` |
+| `tlsSecretRef` | Name of Kubernetes secret containing TLS certs | no | - |
+| `tlsSecretNamespace` | Namespace of the TLS secret | no | challenge namespace |
+| `tlsInsecureSkipVerify` | Skip TLS verification (not recommended) | no | `false` |
 
 ## 🔐 TLS Configuration
 
