@@ -55,9 +55,17 @@ spec:
               # TLS configuration - reference to a Kubernetes secret
               tlsSecretRef: "etcd-tls-certs"
               tlsSecretNamespace: "etcd"
+              # Optional: Custom key names in the TLS secret (defaults shown)
+              # tlsCAKey: "ca.crt"        # Key name for CA certificate
+              # tlsCertKey: "tls.crt"     # Key name for client certificate
+              # tlsKeyKey: "tls.key"      # Key name for client private key
+              # Example with custom key names:
+              # tlsCAKey: "etcd-ca.crt"
+              # tlsCertKey: "etcd-server.crt"
+              # tlsKeyKey: "etcd-server.key"
 ---
 # Example TLS Secret for etcd connection
-# The secret should contain:
+# The secret should contain (key names are configurable via tlsCAKey, tlsCertKey, tlsKeyKey):
 # - ca.crt: CA certificate to verify etcd server
 # - tls.crt: Client certificate (for mTLS)
 # - tls.key: Client private key (for mTLS)
