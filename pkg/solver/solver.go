@@ -40,6 +40,14 @@ type EtcdConfig struct {
 	TLSSecretRef string `json:"tlsSecretRef,omitempty"`
 	// TLSSecretNamespace is the namespace of the TLS secret (defaults to challenge namespace)
 	TLSSecretNamespace string `json:"tlsSecretNamespace,omitempty"`
+	// TLSCAKey is the key name for CA certificate in the secret (default: ca.crt)
+	TLSCAKey string `json:"tlsCAKey,omitempty"`
+	// TLSCertKey is the key name for client certificate in the secret (default: tls.crt)
+	TLSCertKey string `json:"tlsCertKey,omitempty"`
+	// TLSKeyKey is the key name for client private key in the secret (default: tls.key)
+	TLSKeyKey string `json:"tlsKeyKey,omitempty"`
+	// TLSServerName is the server name for TLS certificate verification (useful when connecting via IP)
+	TLSServerName string `json:"tlsServerName,omitempty"`
 	// TLSInsecureSkipVerify skips TLS certificate verification (not recommended for production)
 	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
 	// TLSCA is the CA certificate in PEM format (alternative to using a secret)
@@ -252,6 +260,12 @@ func (e *EtcdDNSSolver) loadTLSConfigFromInline(cfg *EtcdConfig) (*tls.Config, e
 		InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
 	}
 
+	// Set ServerName for TLS verification if specified
+	if cfg.TLSServerName != "" {
+		tlsConfig.ServerName = cfg.TLSServerName
+		klog.V(2).Infof("Using TLS ServerName: %s", cfg.TLSServerName)
+	}
+
 	// Load CA certificate if provided
 	if cfg.TLSCA != "" {
 		caCertPool := x509.NewCertPool()
@@ -300,19 +314,41 @@ func (e *EtcdDNSSolver) loadTLSConfigFromSecret(cfg *EtcdConfig, ch *v1alpha1.Ch
 		InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
 	}
 
+	// Set ServerName for TLS verification if specified
+	if cfg.TLSServerName != "" {
+		tlsConfig.ServerName = cfg.TLSServerName
+		klog.V(2).Infof("Using TLS ServerName: %s", cfg.TLSServerName)
+	}
+
+	// Determine key names (use defaults if not specified)
+	caKey := cfg.TLSCAKey
+	if caKey == "" {
+		caKey = "ca.crt"
+	}
+	certKey := cfg.TLSCertKey
+	if certKey == "" {
+		certKey = "tls.crt"
+	}
+	keyKey := cfg.TLSKeyKey
+	if keyKey == "" {
+		keyKey = "tls.key"
+	}
+
+	klog.V(2).Infof("Using TLS secret keys: CA=%s, Cert=%s, Key=%s", caKey, certKey, keyKey)
+
 	// Load CA certificate if present
-	if caCert, ok := secret.Data["ca.crt"]; ok {
+	if caCert, ok := secret.Data[caKey]; ok {
 		caCertPool := x509.NewCertPool()
 		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return nil, fmt.Errorf("failed to parse CA certificate")
+			return nil, fmt.Errorf("failed to parse CA certificate from key '%s'", caKey)
 		}
 		tlsConfig.RootCAs = caCertPool
-		klog.V(2).Info("CA certificate loaded from secret")
+		klog.V(2).Infof("CA certificate loaded from secret key '%s'", caKey)
 	}
 
 	// Load client certificate and key if present (for mTLS)
-	clientCert, certOk := secret.Data["tls.crt"]
-	clientKey, keyOk := secret.Data["tls.key"]
+	clientCert, certOk := secret.Data[certKey]
+	clientKey, keyOk := secret.Data[keyKey]
 
 	if certOk && keyOk {
 		cert, err := tls.X509KeyPair(clientCert, clientKey)
@@ -320,9 +356,9 @@ func (e *EtcdDNSSolver) loadTLSConfigFromSecret(cfg *EtcdConfig, ch *v1alpha1.Ch
 			return nil, fmt.Errorf("failed to load client certificate and key: %v", err)
 		}
 		tlsConfig.Certificates = []tls.Certificate{cert}
-		klog.V(2).Info("Client certificate and key loaded from secret")
+		klog.V(2).Infof("Client certificate and key loaded from secret keys '%s' and '%s'", certKey, keyKey)
 	} else if certOk || keyOk {
-		return nil, fmt.Errorf("both tls.crt and tls.key must be present in the secret for client authentication")
+		return nil, fmt.Errorf("both '%s' and '%s' must be present in the secret for client authentication", certKey, keyKey)
 	}
 
 	return tlsConfig, nil
