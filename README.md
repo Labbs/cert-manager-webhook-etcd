@@ -56,6 +56,8 @@ kubectl apply -f deploy/apiservice.yaml
 
 ## ⚙️ Configuration
 
+> **⚠️ Important:** Make sure the `groupName` in your Helm values/deployment matches **exactly** the `groupName` in your ClusterIssuer. This is a common source of configuration errors.
+
 ### 1. Create a ClusterIssuer
 
 ```yaml
@@ -265,22 +267,27 @@ REGISTRY=ghcr.io/your-org make docker-push
 
 ## 🐛 Troubleshooting
 
-### DNS challenge not resolving
+**⚠️ Important:** The `groupName` must match exactly in:
+1. Helm values (or deployment ENV)
+2. ClusterIssuer `webhook.groupName` field
 
-1. Verify that etcd is accessible from the webhook
-2. Check the prefix in the configuration
-3. Verify that CoreDNS uses the same prefix
+Common error: `"failed to load config: config is required"` - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed debugging steps.
 
-### Authentication error
-
-Check the etcd credentials in the Issuer configuration.
-
-### Webhook not starting
+### Quick Checks
 
 ```bash
-kubectl describe pod -n cert-manager -l app.kubernetes.io/name=cert-manager-webhook-etcd
+# Verify groupName matches everywhere
+kubectl get deployment cert-manager-webhook-etcd -n cert-manager -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="GROUP_NAME")].value}'
+kubectl get clusterissuer letsencrypt-prod -o yaml | grep groupName
+
+# Check APIService status
+kubectl get apiservice | grep acme
+
+# Check webhook logs
 kubectl logs -n cert-manager -l app.kubernetes.io/name=cert-manager-webhook-etcd
 ```
+
+For detailed troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## 📄 License
 

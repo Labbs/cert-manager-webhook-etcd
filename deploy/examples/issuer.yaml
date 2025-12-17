@@ -63,7 +63,7 @@ spec:
               # tlsServerName: "etcd.local"
 ---
 # Example TLS Secret for etcd connection
-# The secret should contain:
+# The secret should contain (key names are configurable via tlsCAKey, tlsCertKey, tlsKeyKey):
 # - ca.crt: CA certificate to verify etcd server
 # - tls.crt: Client certificate (for mTLS)
 # - tls.key: Client private key (for mTLS)
