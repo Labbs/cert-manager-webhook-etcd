@@ -46,6 +46,8 @@ type EtcdConfig struct {
 	TLSCertKey string `json:"tlsCertKey,omitempty"`
 	// TLSKeyKey is the key name for client private key in the secret (default: tls.key)
 	TLSKeyKey string `json:"tlsKeyKey,omitempty"`
+	// TLSServerName is the server name for TLS certificate verification (useful when connecting via IP)
+	TLSServerName string `json:"tlsServerName,omitempty"`
 	// TLSInsecureSkipVerify skips TLS certificate verification (not recommended for production)
 	TLSInsecureSkipVerify bool `json:"tlsInsecureSkipVerify,omitempty"`
 	// TLSCA is the CA certificate in PEM format (alternative to using a secret)
@@ -258,6 +260,12 @@ func (e *EtcdDNSSolver) loadTLSConfigFromInline(cfg *EtcdConfig) (*tls.Config, e
 		InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
 	}
 
+	// Set ServerName for TLS verification if specified
+	if cfg.TLSServerName != "" {
+		tlsConfig.ServerName = cfg.TLSServerName
+		klog.V(2).Infof("Using TLS ServerName: %s", cfg.TLSServerName)
+	}
+
 	// Load CA certificate if provided
 	if cfg.TLSCA != "" {
 		caCertPool := x509.NewCertPool()
@@ -304,6 +312,12 @@ func (e *EtcdDNSSolver) loadTLSConfigFromSecret(cfg *EtcdConfig, ch *v1alpha1.Ch
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
+	}
+
+	// Set ServerName for TLS verification if specified
+	if cfg.TLSServerName != "" {
+		tlsConfig.ServerName = cfg.TLSServerName
+		klog.V(2).Infof("Using TLS ServerName: %s", cfg.TLSServerName)
 	}
 
 	// Determine key names (use defaults if not specified)

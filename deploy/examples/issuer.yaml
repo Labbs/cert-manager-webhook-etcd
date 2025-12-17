@@ -59,10 +59,8 @@ spec:
               # tlsCAKey: "ca.crt"        # Key name for CA certificate
               # tlsCertKey: "tls.crt"     # Key name for client certificate
               # tlsKeyKey: "tls.key"      # Key name for client private key
-              # Example with custom key names:
-              # tlsCAKey: "etcd-ca.crt"
-              # tlsCertKey: "etcd-server.crt"
-              # tlsKeyKey: "etcd-server.key"
+              # Optional: Server name for TLS verification (useful when connecting via IP)
+              # tlsServerName: "etcd.local"
 ---
 # Example TLS Secret for etcd connection
 # The secret should contain (key names are configurable via tlsCAKey, tlsCertKey, tlsKeyKey):

@@ -122,6 +122,7 @@ spec:
 | `tlsCAKey` | Key name for CA certificate in the secret | no | `ca.crt` |
 | `tlsCertKey` | Key name for client certificate in the secret | no | `tls.crt` |
 | `tlsKeyKey` | Key name for client private key in the secret | no | `tls.key` |
+| `tlsServerName` | Server name for TLS verification (when connecting via IP) | no | - |
 | `tlsInsecureSkipVerify` | Skip TLS verification (not recommended) | no | `false` |
 
 ## 🔐 TLS Configuration
