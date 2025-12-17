@@ -69,7 +69,13 @@ func (e *EtcdDNSSolver) Name() string {
 
 // Present creates the TXT record in etcd for the ACME challenge
 func (e *EtcdDNSSolver) Present(ch *v1alpha1.ChallengeRequest) error {
-	klog.V(2).Infof("Presenting challenge for domain %s with key %s", ch.ResolvedFQDN, ch.Key)
+	klog.Infof("Presenting challenge for domain %s with key %s", ch.ResolvedFQDN, ch.Key)
+	klog.Infof("Challenge request config: %+v", ch.Config)
+	if ch.Config != nil {
+		klog.Infof("Config raw data: %s", string(ch.Config.Raw))
+	} else {
+		klog.Error("Config is nil!")
+	}
 
 	cfg, err := loadConfig(ch.Config)
 	if err != nil {
