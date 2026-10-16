@@ -5,6 +5,9 @@ metadata:
   labels:
     {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
   annotations:
+    {{- with .Values.commonAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
     cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/{{ include "cert-manager-webhook-etcd.servingCertificate" . }}"
 spec:
   group: {{ .Values.groupName }}

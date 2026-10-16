@@ -7,6 +7,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   selfSigned: {}
 ---
@@ -18,6 +22,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   secretName: {{ include "cert-manager-webhook-etcd.rootCACertificate" . }}
   duration: {{ .Values.tls.caDuration }}
@@ -34,6 +42,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   ca:
     secretName: {{ include "cert-manager-webhook-etcd.rootCACertificate" . }}
@@ -46,6 +58,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cert-manager-webhook-etcd.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   secretName: {{ include "cert-manager-webhook-etcd.servingCertificate" . }}
   duration: {{ .Values.tls.duration }}

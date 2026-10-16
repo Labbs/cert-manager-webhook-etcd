@@ -25,6 +25,12 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Labels to add to all deployed resources (including the webhook pods)
+commonLabels: {}
+
+# Annotations to add to all deployed resources (use podAnnotations for the pods)
+commonAnnotations: {}
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
